@@ -1,5 +1,10 @@
-// Tests the authenticate middleware for all JWT scenarios
+// Tests the authenticate middleware — JWT validation and githubToken DB lookup
+jest.mock('../../src/models/user.model', () => ({
+  User: { findOne: jest.fn() },
+}));
+
 const jwt = require('jsonwebtoken');
+const { User } = require('../../src/models/user.model');
 const { authenticate } = require('../../src/middlewares/authenticate');
 
 const secret = process.env.JWT_SECRET;
@@ -14,49 +19,78 @@ function mockRes() {
   return res;
 }
 
+beforeEach(() => {
+  jest.clearAllMocks();
+  User.findOne.mockResolvedValue({ id: 1, username: 'test', githubToken: 'gho_from_db' });
+});
+
 describe('authenticate middleware', () => {
-  it('calls next() and attaches decoded user for a valid token', () => {
+  it('calls next() and attaches decoded user for a valid token', async () => {
     const req = { headers: { authorization: `Bearer ${validToken}` } };
     const res = mockRes();
     const next = jest.fn();
 
-    authenticate(req, res, next);
+    await authenticate(req, res, next);
 
     expect(next).toHaveBeenCalled();
     expect(req.user).toBeDefined();
     expect(req.user.userId).toBe(1);
   });
 
-  it('returns 401 with "No token provided" when header is absent', () => {
-    const req = { headers: {} };
+  it('fetches user from DB and attaches githubToken to req.user', async () => {
+    const req = { headers: { authorization: `Bearer ${validToken}` } };
     const res = mockRes();
     const next = jest.fn();
 
-    authenticate(req, res, next);
+    await authenticate(req, res, next);
 
-    expect(next).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'No token provided' });
+    expect(User.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
+    expect(req.user.githubToken).toBe('gho_from_db');
   });
 
-  it('returns 401 with "Invalid token" for a malformed token', () => {
-    const req = { headers: { authorization: `Bearer ${invalidToken}` } };
+  it('returns 401 if user is not found in the database', async () => {
+    User.findOne.mockResolvedValue(null);
+    const req = { headers: { authorization: `Bearer ${validToken}` } };
     const res = mockRes();
     const next = jest.fn();
 
-    authenticate(req, res, next);
+    await authenticate(req, res, next);
 
     expect(next).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({ error: 'Invalid token' });
   });
 
-  it('returns 401 with "Invalid token" for an expired token', () => {
+  it('returns 401 with "No token provided" when header is absent', async () => {
+    const req = { headers: {} };
+    const res = mockRes();
+    const next = jest.fn();
+
+    await authenticate(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: 'No token provided' });
+  });
+
+  it('returns 401 with "Invalid token" for a malformed token', async () => {
+    const req = { headers: { authorization: `Bearer ${invalidToken}` } };
+    const res = mockRes();
+    const next = jest.fn();
+
+    await authenticate(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid token' });
+  });
+
+  it('returns 401 with "Invalid token" for an expired token', async () => {
     const req = { headers: { authorization: `Bearer ${expiredToken}` } };
     const res = mockRes();
     const next = jest.fn();
 
-    authenticate(req, res, next);
+    await authenticate(req, res, next);
 
     expect(next).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(401);
