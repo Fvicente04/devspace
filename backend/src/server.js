@@ -5,8 +5,12 @@ const { sequelize } = require('./config/database');
 
 sequelize
   .authenticate()
-  .then(() => console.log('Database connection established.'))
-  .catch((err) => console.error('Unable to connect to the database:', err));
+  .then(() => {
+    console.log('Database connection established.');
+    return sequelize.sync();
+  })
+  .then(() => console.log('Database tables synced.'))
+  .catch((err) => console.error('Database startup error:', err));
 
 app.listen(env.port, () => {
   console.log(`Server running on port ${env.port}`);
