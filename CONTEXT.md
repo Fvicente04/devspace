@@ -5,6 +5,15 @@
 
 ---
 
+## Local Development — Known Decisions
+
+- **Frontend runs on port 4201**, not 4200. Port 4200 is occupied by another local project (BudgetFlow). Fixed in `angular.json` under `serve.options.port` to avoid a random port on every restart. Update `FRONTEND_URL` in `backend/.env` accordingly.
+- **`sequelize.sync()` runs on startup** in `server.js`. It creates missing tables from the Sequelize models on every boot. Safe to run repeatedly — it does not drop existing data.
+- **Frontend test runner is Vitest**, not Karma/Jasmine. Angular 21 uses `@angular/build:unit-test` which bundles Vitest. Run tests with `ng test --watch=false`, not `ng test --browsers=ChromeHeadless`.
+- **`app.html` contains only `<router-outlet />`**. The Angular welcome template was removed. Do not add anything else to this file.
+
+---
+
 ## What is DevSpace
 
 DevSpace is a Developer Dashboard web app that centralizes the most important information of a developer's day:
@@ -110,7 +119,7 @@ JWT_EXPIRES_IN=7d
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 GITHUB_CALLBACK_URL=http://localhost:3000/auth/github/callback
-FRONTEND_URL=http://localhost:4200
+FRONTEND_URL=http://localhost:4201
 ```
 
 ### Frontend `environment.ts`
