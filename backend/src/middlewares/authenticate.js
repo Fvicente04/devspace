@@ -1,7 +1,8 @@
-// JWT authentication middleware — attaches decoded user to req.user or returns 401
+// JWT authentication middleware — verifies token and fetches full user (including githubToken) from DB
 const authService = require('../services/auth.service');
+const { User } = require('../models/user.model');
 
-function authenticate(req, res, next) {
+async function authenticate(req, res, next) {
   const token = req.headers.authorization?.replace('Bearer ', '');
 
   if (!token) {
@@ -9,7 +10,14 @@ function authenticate(req, res, next) {
   }
 
   try {
-    req.user = authService.verifyToken(token);
+    const decoded = authService.verifyToken(token);
+    const user = await User.findOne({ where: { id: decoded.userId } });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    req.user = { ...decoded, githubToken: user.githubToken };
     next();
   } catch {
     res.status(401).json({ error: 'Invalid token' });

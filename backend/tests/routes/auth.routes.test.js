@@ -15,8 +15,13 @@ jest.mock('../../src/services/auth.service', () => ({
   verifyToken: jest.fn(),
 }));
 
+jest.mock('../../src/models/user.model', () => ({
+  User: { findOne: jest.fn() },
+}));
+
 const passport = require('passport');
 const authService = require('../../src/services/auth.service');
+const { User } = require('../../src/models/user.model');
 const app = require('../../src/app');
 
 const mockUser = {
@@ -88,6 +93,7 @@ describe('GET /auth/me', () => {
       displayName: mockUser.displayName,
       avatarUrl: mockUser.avatarUrl,
     });
+    User.findOne.mockResolvedValue({ ...mockUser, githubToken: 'gho_secret' });
 
     const res = await request(app)
       .get('/auth/me')
