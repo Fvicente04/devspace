@@ -1,0 +1,70 @@
+<section class="notes-card">
+  <div class="card-header">
+    <span class="header-title"><span class="header-dot"></span>Notes</span>
+    <button data-testid="new-note-btn" type="button" class="header-action" (click)="startCreate()">
+      New Note
+    </button>
+  </div>
+
+  @if (isCreating()) {
+    <div class="note-form">
+      <input
+        data-testid="note-title-input"
+        type="text"
+        placeholder="Title"
+        [value]="newTitle()"
+        (input)="newTitle.set($any($event.target).value)"
+      />
+      <textarea
+        data-testid="note-content-input"
+        placeholder="Plain text note"
+        [value]="newContent()"
+        (input)="newContent.set($any($event.target).value)"
+      ></textarea>
+      <button data-testid="save-create-btn" type="button" class="primary-btn" (click)="saveCreate()">
+        Save
+      </button>
+    </div>
+  }
+
+  @if (notes().length === 0) {
+    <p class="empty-state">No notes yet</p>
+  }
+
+  <div class="notes-list">
+    @for (note of notes(); track note.id) {
+      <article data-testid="note-item" class="note-item">
+        @if (editingId() === note.id) {
+          <div class="note-form">
+            <input
+              data-testid="note-title-input"
+              type="text"
+              [value]="newTitle()"
+              (input)="newTitle.set($any($event.target).value)"
+            />
+            <textarea
+              data-testid="note-content-input"
+              [value]="newContent()"
+              (input)="newContent.set($any($event.target).value)"
+            ></textarea>
+            <button data-testid="save-edit-btn" type="button" class="primary-btn" (click)="saveEdit(note.id)">
+              Save
+            </button>
+          </div>
+        } @else {
+          <h3>{{ note.title || 'Untitled' }}</h3>
+          <p class="note-content">{{ note.content }}</p>
+          @if (note.taskId) {
+            <span class="note-task-link">Task #{{ note.taskId }}</span>
+          }
+          <div class="note-actions">
+            <button [attr.data-testid]="'edit-note-' + note.id" type="button" (click)="startEdit(note)">Edit</button>
+            <button [attr.data-testid]="'delete-note-' + note.id" type="button" (click)="deleteNote(note.id)">
+              Delete
+            </button>
+          </div>
+        }
+      </article>
+    }
+  </div>
+</section>
