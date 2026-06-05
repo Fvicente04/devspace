@@ -7,3 +7,4 @@ process.env.GITHUB_CLIENT_ID = 'test-client-id';
 process.env.GITHUB_CLIENT_SECRET = 'test-client-secret';
 process.env.GITHUB_CALLBACK_URL = 'http://localhost:3000/auth/github/callback';
 process.env.FRONTEND_URL = 'http://localhost:4200';
+process.env.ENCRYPTION_KEY = 'test-encryption-key-for-jest-suite';

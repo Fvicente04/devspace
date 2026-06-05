@@ -9,6 +9,7 @@ const required = [
   'GITHUB_CLIENT_SECRET',
   'GITHUB_CALLBACK_URL',
   'FRONTEND_URL',
+  'ENCRYPTION_KEY',
 ];
 
 const missing = required.filter((key) => !process.env[key]);
@@ -25,4 +26,5 @@ module.exports = {
   githubClientSecret: process.env.GITHUB_CLIENT_SECRET,
   githubCallbackUrl: process.env.GITHUB_CALLBACK_URL,
   frontendUrl: process.env.FRONTEND_URL,
+  encryptionKey: process.env.ENCRYPTION_KEY,
 };
