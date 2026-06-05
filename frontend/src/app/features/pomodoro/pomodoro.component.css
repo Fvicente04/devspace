@@ -1,0 +1,117 @@
+.pomodoro {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  color: var(--text);
+  transition: border-color 0.15s;
+}
+
+.pomodoro:hover {
+  border-color: var(--border-bright);
+}
+
+.modes,
+.controls,
+.stats,
+.dots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+button,
+select {
+  border: 1px solid var(--border-bright);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  padding: 8px 10px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+button:hover,
+select:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+button.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent-bright);
+}
+
+.timer-display {
+  margin: 20px 0 12px;
+  color: var(--accent-bright);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 48px;
+  line-height: 1;
+}
+
+.active-task,
+.task-select,
+.stats {
+  margin: 12px 0;
+}
+
+.active-task {
+  color: var(--text);
+}
+
+.task-select {
+  display: grid;
+  gap: 6px;
+}
+
+.task-select span,
+.stats {
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.controls button {
+  min-width: 72px;
+}
+
+.controls button:first-child,
+.controls button:only-child {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.controls button:first-child:hover,
+.controls button:only-child:hover {
+  background: var(--accent-bright);
+  border-color: var(--accent-bright);
+  color: var(--bg);
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-dim);
+}
+
+.dot.filled {
+  background: var(--accent-bright);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+}

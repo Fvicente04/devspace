@@ -3,16 +3,18 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { PrsWidgetComponent } from '../github/prs-widget/prs-widget.component';
 import { IssuesWidgetComponent } from '../github/issues-widget/issues-widget.component';
 import { ActivityWidgetComponent } from '../github/activity-widget/activity-widget.component';
+import { PomodoroComponent } from '../pomodoro/pomodoro.component';
 
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PrsWidgetComponent, IssuesWidgetComponent, ActivityWidgetComponent],
+  imports: [PrsWidgetComponent, IssuesWidgetComponent, ActivityWidgetComponent, PomodoroComponent],
   template: `
     <div class="dashboard">
       <app-prs-widget />
       <app-issues-widget />
       <app-activity-widget />
+      <app-pomodoro />
     </div>
   `,
   styles: [`

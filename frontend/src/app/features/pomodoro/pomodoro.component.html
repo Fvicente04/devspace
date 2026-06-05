@@ -1,0 +1,64 @@
+<section class="pomodoro">
+  <div class="modes" aria-label="Timer modes">
+    <button
+      data-testid="mode-focus"
+      type="button"
+      [class.active]="mode() === 'focus'"
+      (click)="switchMode('focus')"
+    >
+      Focus
+    </button>
+    <button
+      data-testid="mode-short_break"
+      type="button"
+      [class.active]="mode() === 'short_break'"
+      (click)="switchMode('short_break')"
+    >
+      Short break
+    </button>
+    <button
+      data-testid="mode-long_break"
+      type="button"
+      [class.active]="mode() === 'long_break'"
+      (click)="switchMode('long_break')"
+    >
+      Long break
+    </button>
+  </div>
+
+  <div data-testid="timer-display" class="timer-display">{{ displayTime() }}</div>
+
+  @if (state() === 'running' && selectedTask(); as task) {
+    <p data-testid="active-task" class="active-task">{{ task.title }}</p>
+  }
+
+  <label class="task-select">
+    <span>Task</span>
+    <select data-testid="task-select" [value]="selectedTaskId() || ''" (change)="updateSelectedTask($event)">
+      <option value="">No task</option>
+      @for (task of tasks(); track task.id) {
+        <option [value]="task.id">{{ task.title }}</option>
+      }
+    </select>
+  </label>
+
+  <div class="controls">
+    @if (state() === 'running') {
+      <button data-testid="stop-btn" type="button" (click)="stopTimer(false)">Stop</button>
+      <button type="button" (click)="stopTimer(true)">Skip</button>
+    } @else {
+      <button data-testid="start-btn" type="button" (click)="startTimer()">Start</button>
+    }
+  </div>
+
+  <div class="stats">
+    <span><strong data-testid="total-minutes">{{ todayStats().totalMinutes }}</strong> min</span>
+    <span><strong data-testid="completed-sessions">{{ todayStats().completedSessions }}</strong> done</span>
+  </div>
+
+  <div class="dots" aria-label="Pomodoro progress">
+    @for (filled of pomoDots(); track $index) {
+      <span data-testid="pomo-dot" class="dot" [class.filled]="filled"></span>
+    }
+  </div>
+</section>
