@@ -17,7 +17,12 @@ async function authenticate(req, res, next) {
       return res.status(401).json({ error: 'Invalid token' });
     }
 
-    req.user = { ...decoded, githubToken: user.githubToken };
+    req.user = {
+      ...decoded,
+      githubToken: user.githubToken,
+      azureOrganization: user.azureOrganization || null,
+      azurePatToken: user.azurePatToken || null,
+    };
     next();
   } catch {
     res.status(401).json({ error: 'Invalid token' });
