@@ -120,9 +120,17 @@ export class PomodoroComponent implements OnInit, OnDestroy {
   }
 
   private playNotification() {
-    if (typeof Audio === 'undefined') return;
+    if (typeof AudioContext === 'undefined') return;
 
-    const audio = new Audio();
-    void audio.play?.();
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.8);
   }
 }
