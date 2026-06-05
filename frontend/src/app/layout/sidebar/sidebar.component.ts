@@ -40,4 +40,8 @@ export class SidebarComponent implements OnInit {
   isActive(path: string): boolean {
     return this.router.url === path || this.router.url.startsWith(`${path}/`);
   }
+
+  logout() {
+    this.auth.logout();
+  }
 }

@@ -87,6 +87,30 @@ svg {
   border-top: 1px solid var(--border);
 }
 
+.user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.logout-btn {
+  background: transparent;
+  border: 1px solid var(--border-bright);
+  border-radius: 8px;
+  color: var(--text-muted);
+  padding: 6px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.logout-btn:hover {
+  background: var(--red-dim);
+  color: var(--red);
+  border-color: var(--red);
+}
+
 .avatar {
   width: 34px;
   height: 34px;
