@@ -1,6 +1,6 @@
-// Production environment configuration — fill apiUrl and githubClientId on deploy
+// Production environment configuration
 export const environment = {
   production: true,
-  apiUrl: '',
-  githubClientId: '',
+  apiUrl: 'https://devspace-production-9d7d.up.railway.app',
+  githubClientId: 'Ov23li4BUQrzhndToPrL',
 };
