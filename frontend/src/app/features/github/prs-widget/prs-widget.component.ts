@@ -3,15 +3,14 @@ import { Component, inject, OnInit, ChangeDetectionStrategy, signal } from '@ang
 import { firstValueFrom } from 'rxjs';
 import { GithubService } from '../github.service';
 import { PullRequest } from '../github.models';
+import { CardComponent } from '../../../shared/card/card.component';
 
 @Component({
   selector: 'app-prs-widget',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CardComponent],
   template: `
-    <div class="widget-card">
-      <div class="card-header">
-        <span class="card-title"><span class="dot dot-green"></span>PULL REQUESTS</span>
-      </div>
+    <app-card title="Pull Requests" dotColor="var(--green)">
       @if (loading()) {
         <div data-testid="loading" class="loading-row">Loading...</div>
       } @else if (prs().length === 0) {
@@ -29,15 +28,9 @@ import { PullRequest } from '../github.models';
           </div>
         }
       }
-    </div>
+    </app-card>
   `,
   styles: [`
-    .widget-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; transition: border-color 0.15s linear; }
-    .widget-card:hover { border-color: var(--border-bright); }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .card-title { font-size: 11px; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
-    .dot { width: 6px; height: 6px; border-radius: 50%; }
-    .dot-green { background: var(--green); }
     .gh-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
     .gh-item:last-child { border-bottom: none; }
     .gh-item-content { flex: 1; min-width: 0; }

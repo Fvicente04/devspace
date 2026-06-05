@@ -2,6 +2,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  HostListener,
   OnDestroy,
   OnInit,
   computed,
@@ -64,6 +65,13 @@ export class PomodoroComponent implements OnInit, OnDestroy {
   updateSelectedTask(event: Event) {
     const value = (event.target as HTMLSelectElement).value;
     this.selectedTaskId.set(value ? Number(value) : null);
+  }
+
+  @HostListener('window:devspace:start-pomodoro', ['$event'])
+  selectTaskFromDashboard(event: Event) {
+    if (this.state() !== 'idle') return;
+    const taskId = (event as CustomEvent<{ taskId: number }>).detail.taskId;
+    this.selectedTaskId.set(taskId);
   }
 
   async startTimer() {

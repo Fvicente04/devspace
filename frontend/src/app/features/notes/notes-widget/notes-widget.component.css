@@ -1,0 +1,73 @@
+:host {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.note-item {
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.note-item:hover {
+  border-color: var(--border-bright);
+}
+
+.note-title {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.note-preview {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.note-task-link {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--accent);
+  margin-top: 5px;
+}
+
+.note-form {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+input,
+textarea {
+  background: var(--bg);
+  border: 1px solid var(--border-bright);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  padding: 8px 12px;
+}
+
+textarea {
+  min-height: 70px;
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.empty-state {
+  color: var(--text-muted);
+  font-size: 12px;
+}

@@ -2,7 +2,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { AuthService } from './auth.service';
 import { ENVIRONMENT } from './environment.token';
@@ -12,6 +12,7 @@ const testEnv = { apiUrl: 'http://localhost:3000', production: false, githubClie
 describe('AuthService', () => {
   let service: AuthService;
   let router: Router;
+  let http: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -25,10 +26,14 @@ describe('AuthService', () => {
     });
     service = TestBed.inject(AuthService);
     router = TestBed.inject(Router);
+    http = TestBed.inject(HttpTestingController);
     localStorage.clear();
   });
 
-  afterEach(() => localStorage.clear());
+  afterEach(() => {
+    http.verify();
+    localStorage.clear();
+  });
 
   describe('login()', () => {
     it('redirects to apiUrl/auth/github', () => {
@@ -55,9 +60,16 @@ describe('AuthService', () => {
   describe('logout()', () => {
     it('removes token from localStorage', () => {
       localStorage.setItem('devspace_token', 'existing_token');
+      service.currentUser.set({
+        id: 1,
+        username: 'patri',
+        displayName: 'Patri',
+        avatarUrl: 'https://example.com/avatar.png',
+      });
       vi.spyOn(router, 'navigate');
       service.logout();
       expect(localStorage.getItem('devspace_token')).toBeNull();
+      expect(service.currentUser()).toBeNull();
     });
 
     it('navigates to /login', () => {
@@ -86,6 +98,43 @@ describe('AuthService', () => {
 
     it('returns false when no token', () => {
       expect(service.isAuthenticated()).toBe(false);
+    });
+  });
+
+  describe('loadCurrentUser()', () => {
+    it('loads authenticated user from /auth/me', async () => {
+      localStorage.setItem('devspace_token', 'any_token');
+
+      const promise = service.loadCurrentUser();
+      const req = http.expectOne('http://localhost:3000/auth/me');
+      expect(req.request.method).toBe('GET');
+      req.flush({
+        id: 1,
+        username: 'patri',
+        displayName: 'Patri',
+        avatarUrl: 'https://example.com/avatar.png',
+      });
+      await promise;
+
+      expect(service.currentUser()).toEqual({
+        id: 1,
+        username: 'patri',
+        displayName: 'Patri',
+        avatarUrl: 'https://example.com/avatar.png',
+      });
+    });
+
+    it('clears current user without a token', async () => {
+      service.currentUser.set({
+        id: 1,
+        username: 'patri',
+        displayName: 'Patri',
+        avatarUrl: null,
+      });
+
+      await service.loadCurrentUser();
+
+      expect(service.currentUser()).toBeNull();
     });
   });
 });

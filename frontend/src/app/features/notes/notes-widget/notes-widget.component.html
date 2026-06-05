@@ -1,0 +1,45 @@
+<app-card title="Notes" dotColor="var(--accent)" actionLabel="New Note" (actionClick)="startCreate()">
+  @if (isCreating()) {
+    <div class="note-form">
+      <input
+        type="text"
+        placeholder="Title"
+        [value]="newTitle()"
+        (input)="newTitle.set($any($event.target).value)"
+      />
+      <textarea
+        placeholder="Plain text note"
+        [value]="newContent()"
+        (input)="newContent.set($any($event.target).value)"
+      ></textarea>
+      <button class="btn btn-primary" type="button" (click)="saveCreate()">Save</button>
+    </div>
+  }
+
+  @for (note of visibleNotes(); track note.id) {
+    <div class="note-item" (click)="startEdit(note)">
+      @if (editingId() === note.id) {
+        <div class="note-form" (click)="$event.stopPropagation()">
+          <input
+            type="text"
+            [value]="newTitle()"
+            (input)="newTitle.set($any($event.target).value)"
+          />
+          <textarea
+            [value]="newContent()"
+            (input)="newContent.set($any($event.target).value)"
+          ></textarea>
+          <button class="btn btn-primary" type="button" (click)="saveEdit(note.id)">Save</button>
+        </div>
+      } @else {
+        <div class="note-title">{{ note.title || 'Untitled' }}</div>
+        <div class="note-preview">{{ note.content }}</div>
+        @if (note.taskId) {
+          <div class="note-task-link">Task #{{ note.taskId }}</div>
+        }
+      }
+    </div>
+  } @empty {
+    <div class="empty-state">No notes yet</div>
+  }
+</app-card>

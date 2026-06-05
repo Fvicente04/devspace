@@ -1,0 +1,39 @@
+<app-card title="Tasks" dotColor="var(--yellow)">
+  <div class="task-form">
+    <input
+      #taskTitleInput
+      type="text"
+      placeholder="Task title"
+      [value]="newTitle()"
+      (input)="newTitle.set($any($event.target).value)"
+    />
+    <button class="btn btn-primary" type="button" (click)="addTask()">Add</button>
+  </div>
+
+  <div class="task-list">
+    @for (task of tasks(); track task.id) {
+      <div class="task-item" [class.done]="task.status === 'done'">
+        <button
+          class="task-check"
+          [class.status-done]="task.status === 'done'"
+          [class.status-in-progress]="task.status === 'in_progress'"
+          type="button"
+          (click)="cycleStatus(task)"
+          aria-label="Change task status"
+        ></button>
+        <div class="task-main">
+          <div class="task-title">{{ task.title }}</div>
+          <span class="task-status" [class]="'task-status status-' + task.status">
+            {{ task.status }}
+          </span>
+        </div>
+        <div class="task-actions">
+          <button type="button" aria-label="Start Pomodoro" (click)="selectTaskForPomodoro(task.id)">&#9654;</button>
+          <button type="button" aria-label="Delete task" (click)="deleteTask(task.id)">&times;</button>
+        </div>
+      </div>
+    } @empty {
+      <div class="empty-state">No tasks yet</div>
+    }
+  </div>
+</app-card>
