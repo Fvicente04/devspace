@@ -47,8 +47,10 @@ describe('SettingsComponent', () => {
       expect(service.getAzureSettings).toHaveBeenCalled();
     });
 
-    it('shows organization input and PAT input', async () => {
+    it('shows organization input and PAT input after clicking Connect', async () => {
       await createComponent();
+      fixture.nativeElement.querySelector('[data-testid="connect-btn"]').click();
+      fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('[data-testid="org-input"]')).toBeTruthy();
       expect(fixture.nativeElement.querySelector('[data-testid="pat-input"]')).toBeTruthy();
     });
@@ -86,8 +88,14 @@ describe('SettingsComponent', () => {
   });
 
   describe('connect flow', () => {
+    async function openForm() {
+      fixture.nativeElement.querySelector('[data-testid="connect-btn"]').click();
+      fixture.detectChanges();
+    }
+
     it('calls saveAzureSettings with organization and patToken', async () => {
       await createComponent();
+      await openForm();
       const orgInput: HTMLInputElement = fixture.nativeElement.querySelector('[data-testid="org-input"]');
       const patInput: HTMLInputElement = fixture.nativeElement.querySelector('[data-testid="pat-input"]');
       orgInput.value = 'softworks-workforce';
@@ -101,6 +109,7 @@ describe('SettingsComponent', () => {
 
     it('shows connected state after successful connect', async () => {
       await createComponent();
+      await openForm();
       const orgInput: HTMLInputElement = fixture.nativeElement.querySelector('[data-testid="org-input"]');
       const patInput: HTMLInputElement = fixture.nativeElement.querySelector('[data-testid="pat-input"]');
       orgInput.value = 'softworks-workforce';
@@ -115,6 +124,7 @@ describe('SettingsComponent', () => {
 
     it('shows error message if organization is empty', async () => {
       await createComponent();
+      await openForm();
       fixture.nativeElement.querySelector('[data-testid="connect-btn"]').click();
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('[data-testid="error-msg"]')).toBeTruthy();
@@ -123,6 +133,7 @@ describe('SettingsComponent', () => {
 
     it('shows error message if PAT is empty', async () => {
       await createComponent();
+      await openForm();
       const orgInput: HTMLInputElement = fixture.nativeElement.querySelector('[data-testid="org-input"]');
       orgInput.value = 'softworks-workforce';
       orgInput.dispatchEvent(new Event('input'));
