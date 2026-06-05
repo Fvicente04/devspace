@@ -35,6 +35,18 @@ describe('SidebarComponent', () => {
     fixture.detectChanges();
   });
 
+  it('renders a Settings nav item', () => {
+    const items = fixture.nativeElement.querySelectorAll('.nav-item');
+    const labels = Array.from(items).map((el: any) => el.textContent.trim());
+    expect(labels).toContain('Settings');
+  });
+
+  it('Settings nav item links to /settings', () => {
+    const items: NodeListOf<HTMLAnchorElement> = fixture.nativeElement.querySelectorAll('.nav-item');
+    const settingsItem = Array.from(items).find((el) => el.textContent.includes('Settings'));
+    expect(settingsItem?.getAttribute('href')).toBe('/settings');
+  });
+
   it('renders the logout button', () => {
     const btn = fixture.nativeElement.querySelector('[data-testid="logout-btn"]');
     expect(btn).toBeTruthy();
