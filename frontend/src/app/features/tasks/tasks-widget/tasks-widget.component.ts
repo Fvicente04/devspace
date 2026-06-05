@@ -34,6 +34,8 @@ export class TasksWidgetComponent implements OnInit {
 
   tasks = signal<Task[]>([]);
   newTitle = signal('');
+  editingId = signal<number | null>(null);
+  editTitle = signal('');
 
   async ngOnInit() {
     this.tasks.set(await firstValueFrom(this.service.getTasks()));
@@ -56,6 +58,27 @@ export class TasksWidgetComponent implements OnInit {
   async deleteTask(id: number) {
     await firstValueFrom(this.service.deleteTask(id));
     this.tasks.update((tasks) => tasks.filter((task) => task.id !== id));
+  }
+
+  startEdit(task: Task) {
+    this.editingId.set(task.id);
+    this.editTitle.set(task.title);
+  }
+
+  cancelEdit() {
+    this.editingId.set(null);
+    this.editTitle.set('');
+  }
+
+  async saveEdit(task: Task) {
+    const title = this.editTitle().trim();
+    if (!title || title === task.title) {
+      this.cancelEdit();
+      return;
+    }
+    const updated = await firstValueFrom(this.service.updateTask(task.id, { title }));
+    this.tasks.update((tasks) => tasks.map((t) => (t.id === task.id ? updated : t)));
+    this.editingId.set(null);
   }
 
   selectTaskForPomodoro(taskId: number) {

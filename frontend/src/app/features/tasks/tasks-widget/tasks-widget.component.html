@@ -12,7 +12,7 @@
 
   <div class="task-list">
     @for (task of tasks(); track task.id) {
-      <div class="task-item" [class.done]="task.status === 'done'">
+      <div class="task-item" data-testid="task-item" [class.done]="task.status === 'done'">
         <button
           class="task-check"
           [class.status-done]="task.status === 'done'"
@@ -22,14 +22,34 @@
           aria-label="Change task status"
         ></button>
         <div class="task-main">
-          <div class="task-title">{{ task.title }}</div>
-          <span class="task-status" [class]="'task-status status-' + task.status">
-            {{ task.status }}
-          </span>
+          @if (editingId() === task.id) {
+            <input
+              class="task-edit-input"
+              type="text"
+              data-testid="task-edit-input"
+              [value]="editTitle()"
+              (input)="editTitle.set($any($event.target).value)"
+              (keydown.enter)="saveEdit(task)"
+              (keydown.escape)="cancelEdit()"
+              (click)="$event.stopPropagation()"
+              autofocus
+            />
+          } @else {
+            <div class="task-title" (dblclick)="startEdit(task)">{{ task.title }}</div>
+            <span class="task-status" [class]="'task-status status-' + task.status">
+              {{ task.status }}
+            </span>
+          }
         </div>
         <div class="task-actions">
-          <button type="button" aria-label="Start Pomodoro" (click)="selectTaskForPomodoro(task.id)">&#9654;</button>
-          <button type="button" aria-label="Delete task" (click)="deleteTask(task.id)">&times;</button>
+          @if (editingId() === task.id) {
+            <button type="button" aria-label="Save" data-testid="save-edit-btn" (click)="saveEdit(task)">&#10003;</button>
+            <button type="button" aria-label="Cancel" data-testid="cancel-edit-btn" (click)="cancelEdit()">&#10005;</button>
+          } @else {
+            <button type="button" aria-label="Edit task" [attr.data-testid]="'edit-task-' + task.id" (click)="startEdit(task)">&#9998;</button>
+            <button type="button" aria-label="Start Pomodoro" (click)="selectTaskForPomodoro(task.id)">&#9654;</button>
+            <button type="button" aria-label="Delete task" (click)="deleteTask(task.id)">&times;</button>
+          }
         </div>
       </div>
     } @empty {
