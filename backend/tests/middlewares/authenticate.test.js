@@ -21,7 +21,13 @@ function mockRes() {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  User.findOne.mockResolvedValue({ id: 1, username: 'test', githubToken: 'gho_from_db' });
+  User.findOne.mockResolvedValue({
+    id: 1,
+    username: 'test',
+    githubToken: 'gho_from_db',
+    azureOrganization: 'softworks-workforce',
+    azurePatToken: 'encrypted_pat',
+  });
 });
 
 describe('authenticate middleware', () => {
@@ -95,5 +101,27 @@ describe('authenticate middleware', () => {
     expect(next).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({ error: 'Invalid token' });
+  });
+
+  it('attaches azureOrganization and azurePatToken to req.user when connected', async () => {
+    const req = { headers: { authorization: `Bearer ${validToken}` } };
+    const res = mockRes();
+    const next = jest.fn();
+
+    await authenticate(req, res, next);
+
+    expect(req.user.azureOrganization).toBe('softworks-workforce');
+    expect(req.user.azurePatToken).toBe('encrypted_pat');
+  });
+
+  it('sets req.user.azureOrganization to null when user is not connected', async () => {
+    User.findOne.mockResolvedValue({ id: 1, username: 'test', githubToken: 'gho', azureOrganization: null, azurePatToken: null });
+    const req = { headers: { authorization: `Bearer ${validToken}` } };
+    const res = mockRes();
+    const next = jest.fn();
+
+    await authenticate(req, res, next);
+
+    expect(req.user.azureOrganization).toBeNull();
   });
 });
