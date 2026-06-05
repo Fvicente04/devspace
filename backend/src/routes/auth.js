@@ -8,11 +8,11 @@ const env = require('../config/env');
 const router = Router();
 
 router.get('/github', (req, res, next) => {
-  passport.authenticate('github', { scope: ['user', 'repo'] })(req, res, next);
+  passport.authenticate('github', { scope: ['user', 'repo'], session: false })(req, res, next);
 });
 
 router.get('/github/callback', (req, res, next) => {
-  passport.authenticate('github', {}, (err, user) => {
+  passport.authenticate('github', { session: false }, (err, user) => {
     if (err || !user) {
       return res.redirect(`${env.frontendUrl}/login?error=auth_failed`);
     }
