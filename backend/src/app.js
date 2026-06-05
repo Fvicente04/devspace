@@ -14,6 +14,8 @@ const githubRouter = require('./routes/github');
 const tasksRouter = require('./routes/tasks');
 const notesRouter = require('./routes/notes');
 const timerRouter = require('./routes/timer');
+const settingsRouter = require('./routes/settings');
+const azureRouter = require('./routes/azure');
 
 const app = express();
 
@@ -55,5 +57,6 @@ app.use('/github', githubRouter);
 app.use('/tasks', tasksRouter);
 app.use('/notes', notesRouter);
 app.use('/timer', timerRouter);
+app.use('/settings', settingsRouter);
 
 module.exports = app;
