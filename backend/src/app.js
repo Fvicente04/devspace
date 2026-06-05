@@ -58,5 +58,6 @@ app.use('/tasks', tasksRouter);
 app.use('/notes', notesRouter);
 app.use('/timer', timerRouter);
 app.use('/settings', settingsRouter);
+app.use('/azure', azureRouter);
 
 module.exports = app;
