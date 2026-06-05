@@ -58,6 +58,11 @@ export class NotesWidgetComponent implements OnInit {
     this.editingId.set(null);
   }
 
+  async deleteNote(id: number) {
+    await firstValueFrom(this.service.deleteNote(id));
+    this.setNotes(this.notes().filter((note) => note.id !== id));
+  }
+
   private setNotes(notes: Note[]) {
     this.notes.set(notes);
     this.visibleNotes.set(notes.slice(0, 3));

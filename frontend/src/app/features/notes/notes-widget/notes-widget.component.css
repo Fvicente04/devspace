@@ -17,10 +17,35 @@
   border-color: var(--border-bright);
 }
 
+.note-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
 .note-title {
   font-size: 12px;
   font-weight: 700;
-  margin-bottom: 4px;
+}
+
+.note-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 2px;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.note-item:hover .note-delete-btn {
+  opacity: 1;
+}
+
+.note-delete-btn:hover {
+  color: var(--red);
 }
 
 .note-preview {

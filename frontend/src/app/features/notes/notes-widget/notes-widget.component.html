@@ -32,7 +32,16 @@
           <button class="btn btn-primary" type="button" (click)="saveEdit(note.id)">Save</button>
         </div>
       } @else {
-        <div class="note-title">{{ note.title || 'Untitled' }}</div>
+        <div class="note-header">
+          <div class="note-title">{{ note.title || 'Untitled' }}</div>
+          <button
+            class="note-delete-btn"
+            type="button"
+            aria-label="Delete note"
+            [attr.data-testid]="'delete-note-' + note.id"
+            (click)="$event.stopPropagation(); deleteNote(note.id)"
+          >&times;</button>
+        </div>
         <div class="note-preview">{{ note.content }}</div>
         @if (note.taskId) {
           <div class="note-task-link">Task #{{ note.taskId }}</div>
