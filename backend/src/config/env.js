@@ -9,7 +9,6 @@ const required = [
   'GITHUB_CLIENT_SECRET',
   'GITHUB_CALLBACK_URL',
   'FRONTEND_URL',
-  'ENCRYPTION_KEY',
 ];
 
 const missing = required.filter((key) => !process.env[key]);

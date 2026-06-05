@@ -29,7 +29,10 @@ router.get('/github/callback', async (req, res) => {
     );
 
     const accessToken = tokenRes.data.access_token;
-    if (!accessToken) return res.redirect(`${env.frontendUrl}/login?error=auth_failed`);
+    if (!accessToken) {
+      const detail = tokenRes.data.error_description || 'no_access_token';
+      return res.redirect(`${env.frontendUrl}/login?error=${encodeURIComponent(detail)}`);
+    }
 
     const profileRes = await axios.get('https://api.github.com/user', {
       headers: { Authorization: `token ${accessToken}` },
@@ -47,8 +50,9 @@ router.get('/github/callback', async (req, res) => {
     const token = authService.generateToken(user);
     res.redirect(`${env.frontendUrl}/auth/callback?token=${token}`);
   } catch (err) {
+    const detail = encodeURIComponent(err.message || 'unknown');
     console.error('GitHub OAuth error:', err.message);
-    res.redirect(`${env.frontendUrl}/login?error=auth_failed`);
+    res.redirect(`${env.frontendUrl}/login?error=${detail}`);
   }
 });
 

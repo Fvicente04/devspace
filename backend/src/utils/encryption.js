@@ -1,8 +1,8 @@
 const crypto = require('crypto');
-const { encryptionKey } = require('../config/env');
+const { encryptionKey, jwtSecret } = require('../config/env');
 
 // Key derived once at module load — scrypt is intentionally slow, don't call per-request
-const KEY = crypto.scryptSync(encryptionKey, 'devspace-salt', 32);
+const KEY = crypto.scryptSync(encryptionKey || jwtSecret, 'devspace-salt', 32);
 const ALGORITHM = 'aes-256-gcm';
 
 function encrypt(text) {
