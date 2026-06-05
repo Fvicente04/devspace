@@ -17,18 +17,28 @@ const timerRouter = require('./routes/timer');
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 app.use(helmet());
-app.use(cors({ origin: env.frontendUrl }));
+app.use(cors({
+  origin: env.frontendUrl,
+  credentials: true,
+}));
 app.use(express.json());
 
-// express-session is required by passport for the OAuth state parameter
 app.use(session({
   secret: env.jwtSecret,
   resave: false,
   saveUninitialized: false,
+  cookie: {
+    secure: true,
+    sameSite: 'none',
+    maxAge: 5 * 60 * 1000,
+  }
 }));
 
 app.use(passport.initialize());
+app.use(passport.session());
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
