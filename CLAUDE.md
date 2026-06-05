@@ -593,3 +593,137 @@ input::placeholder { color: var(--text-dim); }
 - Add any animation beyond what is described above
 - Use any UI component library (no Angular Material, no PrimeNG, no Tailwind)
 - Inline styles — always use CSS classes
+
+---
+
+# PART 5 — V2: AZURE DEVOPS INTEGRATION
+
+> This section defines the v2 scope. MVP (v1) is complete and deployed.
+> V2 adds Azure DevOps integration via Personal Access Token (PAT).
+> All anti-overengineering principles from PART 1 still apply.
+
+---
+
+## What v2 adds
+
+A developer can connect their Azure DevOps account using a Personal Access Token (PAT) and see:
+- Work items assigned to them
+- Open PRs in their repositories
+- Pipeline (CI/CD) status
+- Recent commits
+
+---
+
+## Azure DevOps connection model
+
+**No OAuth** — PAT only. This is how VS Code, Postman, and other dev tools connect to Azure DevOps. It is simpler, more reliable in corporate environments, and does not require Azure AD app registration.
+
+The user provides:
+- `azureOrganization` — e.g. `softworks-workforce`
+- `azurePatToken` — Personal Access Token generated at dev.azure.com
+
+Both are stored in the `users` table (PAT encrypted at rest).
+
+---
+
+## Database changes
+
+### Updated `users` table — new columns:
+```sql
+azure_organization    VARCHAR(200)   -- e.g. 'softworks-workforce'
+azure_pat_token       TEXT           -- encrypted PAT
+azure_connected_at    TIMESTAMP      -- when PAT was last saved
+```
+
+**Why encrypt the PAT?** It has the same sensitivity as a password — it grants access to the Azure DevOps organization. Use AES-256 via Node.js native `crypto` module. No external encryption library.
+
+---
+
+## New API Endpoints
+
+### Settings
+```
+GET   /settings/azure          → returns { connected: bool, organization: string|null }
+POST  /settings/azure          → saves PAT and organization (encrypts PAT before storing)
+DELETE /settings/azure         → removes PAT and organization (disconnects)
+```
+
+### Azure DevOps (proxy — backend calls Azure DevOps REST API using stored PAT)
+```
+GET  /azure/workitems          → work items assigned to user
+GET  /azure/prs                → open PRs across all projects
+GET  /azure/pipelines          → recent pipeline runs (last 5)
+GET  /azure/commits            → recent commits (last 10)
+```
+
+**Why proxy?** PAT never leaves the backend — same pattern as GitHub token.
+
+---
+
+## Azure DevOps REST API reference
+
+Base URL: `https://dev.azure.com/{organization}`
+
+Authentication: Basic auth with empty username and PAT as password:
+```js
+const auth = Buffer.from(`:${patToken}`).toString('base64');
+headers: { 'Authorization': `Basic ${auth}` }
+```
+
+Key endpoints:
+```
+Work items:  GET /{org}/{project}/_apis/wit/wiql?api-version=7.0
+PRs:         GET /{org}/{project}/_apis/git/pullrequests?api-version=7.0
+Pipelines:   GET /{org}/{project}/_apis/pipelines/runs?api-version=7.0
+Commits:     GET /{org}/{project}/_apis/git/repositories/{repo}/commits?api-version=7.0
+```
+
+---
+
+## New Frontend Pages/Components
+
+### Settings Page (`/settings`)
+- New route in app.routes.ts
+- New nav item in sidebar: "Settings" (gear icon)
+- Form to connect Azure DevOps:
+  - Organization URL input (placeholder: `softworks-workforce`)
+  - PAT input (password type, never shown after saving)
+  - Connect button
+  - If connected: shows organization name + "Disconnect" button
+  - Connected status shown with green dot
+
+### Azure DevOps Widgets (dashboard)
+- `azure-workitems-widget` — work items card (replaces empty space below GitHub card)
+- `azure-pipelines-widget` — pipeline status (compact, shows pass/fail/running)
+- Each widget shows "Connect Azure DevOps" placeholder if not connected
+
+---
+
+## V2 Implementation Phases
+
+```
+Phase 1 — Backend: encryption utility, settings endpoints, Azure DevOps service
+Phase 2 — Frontend: Settings page, Azure DevOps service, widgets
+Phase 3 — Polish: integrate widgets in dashboard, update sidebar, deploy
+```
+
+---
+
+## Cache strategy for Azure DevOps
+
+Same pattern as GitHub — in-memory Map with TTL:
+- Work items: 5 minutes
+- PRs: 5 minutes  
+- Pipelines: 2 minutes (changes more frequently)
+- Commits: 5 minutes
+
+Cache key format: `azure:{type}:{userId}`
+
+---
+
+## What the agent MUST NOT do in v2
+- Use any external encryption library — Node.js native `crypto` only
+- Store the PAT in plain text — always encrypt before saving
+- Expose the PAT in any API response — settings GET returns only { connected, organization }
+- Add Microsoft OAuth — PAT only
+- Add new npm dependencies without explicit justification
