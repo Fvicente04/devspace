@@ -40,6 +40,7 @@ Fill `backend/.env` with:
 PORT=3000
 DATABASE_URL=postgresql://...
 JWT_SECRET=<run: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))">
+ENCRYPTION_KEY=<run: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))">
 JWT_EXPIRES_IN=7d
 GITHUB_CLIENT_ID=<from github.com/settings/developers>
 GITHUB_CLIENT_SECRET=<from github.com/settings/developers>
@@ -109,3 +110,10 @@ Update your GitHub OAuth App:
 - Notes can be created, edited, and deleted.
 - Sidebar navigation works.
 - Desktop UI matches the dark terminal dashboard design.
+
+## Azure DevOps Integration
+
+1. Go to `dev.azure.com` → User Settings → Personal Access Tokens
+2. Create a token with scopes: **Work Items (Read)**, **Code (Read)**, **Build (Read)**
+3. In DevSpace → **Settings** → paste your organization name and PAT → Connect
+4. Work items and pipeline status will appear on the dashboard automatically
