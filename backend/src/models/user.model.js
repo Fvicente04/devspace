@@ -32,6 +32,21 @@ const User = sequelize.define(
       type: DataTypes.TEXT,
       field: 'github_token',
     },
+    azureOrganization: {
+      type: DataTypes.STRING(200),
+      field: 'azure_organization',
+      allowNull: true,
+    },
+    azurePatToken: {
+      type: DataTypes.TEXT,
+      field: 'azure_pat_token',
+      allowNull: true,
+    },
+    azureConnectedAt: {
+      type: DataTypes.DATE,
+      field: 'azure_connected_at',
+      allowNull: true,
+    },
     createdAt: {
       type: DataTypes.DATE,
       field: 'created_at',
