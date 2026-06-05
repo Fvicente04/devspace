@@ -5,7 +5,15 @@ const env = require('../config/env');
 
 async function findOrCreateUser(githubProfile) {
   const existing = await User.findOne({ where: { githubId: githubProfile.id } });
-  if (existing) return existing;
+  if (existing) {
+    await existing.update({
+      githubToken: githubProfile.accessToken,
+      username: githubProfile.username,
+      displayName: githubProfile.displayName,
+      avatarUrl: githubProfile.photos?.[0]?.value ?? existing.avatarUrl,
+    });
+    return existing;
+  }
 
   return User.create({
     githubId: githubProfile.id,

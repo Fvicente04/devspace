@@ -25,6 +25,7 @@ const existingUser = {
   username: 'felipedev',
   displayName: 'Felipe',
   avatarUrl: 'https://avatar.url',
+  update: jest.fn().mockResolvedValue(true),
 };
 
 describe('findOrCreateUser', () => {
