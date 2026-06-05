@@ -9,6 +9,9 @@ import { NotesWidgetComponent } from '../notes/notes-widget/notes-widget.compone
 import { PomodoroComponent } from '../pomodoro/pomodoro.component';
 import { TimerService } from '../pomodoro/timer.service';
 import { TasksWidgetComponent } from '../tasks/tasks-widget/tasks-widget.component';
+import { PipelinesWidgetComponent } from '../azure/pipelines-widget/pipelines-widget.component';
+import { WorkItemsWidgetComponent } from '../azure/workitems-widget/workitems-widget.component';
+import { SettingsService } from '../settings/settings.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,8 +21,10 @@ import { TasksWidgetComponent } from '../tasks/tasks-widget/tasks-widget.compone
     GithubCardComponent,
     NotesWidgetComponent,
     PageHeaderComponent,
+    PipelinesWidgetComponent,
     PomodoroComponent,
     TasksWidgetComponent,
+    WorkItemsWidgetComponent,
   ],
   template: `
     <app-page-header [title]="'Good morning, ' + username()" [subtitle]="headerSubtitle()">
@@ -33,13 +38,15 @@ import { TasksWidgetComponent } from '../tasks/tasks-widget/tasks-widget.compone
       <app-github-card />
       <app-notes-widget />
       <app-activity-widget class="activity-card" />
+      <app-workitems-widget class="workitems-card" [azureConnected]="azureConnected()" />
+      <app-pipelines-widget class="pipelines-card" [azureConnected]="azureConnected()" />
     </div>
   `,
   styles: [`
     .dashboard-grid {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      grid-template-rows: auto auto;
+      grid-template-rows: auto auto auto;
       gap: 16px;
     }
 
@@ -52,12 +59,25 @@ import { TasksWidgetComponent } from '../tasks/tasks-widget/tasks-widget.compone
       grid-column: 3;
       grid-row: 2;
     }
+
+    .workitems-card {
+      grid-column: 1 / 3;
+      grid-row: 3;
+    }
+
+    .pipelines-card {
+      grid-column: 3;
+      grid-row: 3;
+    }
   `],
 })
 export class DashboardComponent implements OnInit {
   private auth = inject(AuthService);
   private github = inject(GithubService);
   private timer = inject(TimerService);
+  private settingsService = inject(SettingsService);
+
+  azureConnected = signal(false);
 
   username = computed(() => {
     const user = this.auth.currentUser();
@@ -71,11 +91,16 @@ export class DashboardComponent implements OnInit {
   );
 
   async ngOnInit() {
-    await Promise.all([this.auth.loadCurrentUser(), this.loadSummary()]);
+    await Promise.all([this.auth.loadCurrentUser(), this.loadSummary(), this.loadAzureSettings()]);
   }
 
   async refresh() {
-    await this.loadSummary();
+    await Promise.all([this.loadSummary(), this.loadAzureSettings()]);
+  }
+
+  private async loadAzureSettings() {
+    const settings = await firstValueFrom(this.settingsService.getAzureSettings());
+    this.azureConnected.set(settings.connected);
   }
 
   openNewTask() {
