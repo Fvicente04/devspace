@@ -41,12 +41,21 @@ describe('PomodoroComponent', () => {
     tasksService = {
       getTasks: vi.fn().mockReturnValue(of(mockTasks)),
     };
-    vi.stubGlobal(
-      'Audio',
-      class {
-        play = vi.fn();
-      }
-    );
+    const AudioContextMock = vi.fn(function (this: any) {
+      this.createOscillator = vi.fn().mockReturnValue({
+        connect: vi.fn(),
+        frequency: { value: 0 },
+        start: vi.fn(),
+        stop: vi.fn(),
+      });
+      this.createGain = vi.fn().mockReturnValue({
+        connect: vi.fn(),
+        gain: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+      });
+      this.destination = {};
+      this.currentTime = 0;
+    });
+    vi.stubGlobal('AudioContext', AudioContextMock);
 
     await TestBed.configureTestingModule({
       imports: [PomodoroComponent],
@@ -156,6 +165,19 @@ describe('PomodoroComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[data-testid="active-task"]').textContent).toContain('Ship timer');
+  });
+
+  it('plays an audio notification via AudioContext when the timer completes', async () => {
+    fixture.nativeElement.querySelector('[data-testid="start-btn"]').click();
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    vi.advanceTimersByTime(25 * 60 * 1000);
+    await Promise.resolve();
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    expect(AudioContext).toHaveBeenCalled();
   });
 
   it('loads today stats and renders max four Pomodoro dots', () => {
