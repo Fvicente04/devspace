@@ -9,7 +9,7 @@ sequelize
   .authenticate()
   .then(() => {
     console.log('Database connection established.');
-    return sequelize.sync();
+    return sequelize.sync({ alter: true });
   })
   .then(() => console.log('Database tables synced.'))
   .catch((err) => console.error('Database startup error:', err));
