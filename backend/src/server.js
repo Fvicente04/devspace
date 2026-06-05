@@ -1,7 +1,9 @@
 // Entry point — starts the HTTP server and verifies the database connection
 const app = require('./app');
-const env = require('./config/env');
+require('./config/env');
 const { sequelize } = require('./config/database');
+
+const PORT = process.env.PORT || 3000;
 
 sequelize
   .authenticate()
@@ -12,6 +14,6 @@ sequelize
   .then(() => console.log('Database tables synced.'))
   .catch((err) => console.error('Database startup error:', err));
 
-app.listen(env.port, () => {
-  console.log(`Server running on port ${env.port}`);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
