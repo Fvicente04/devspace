@@ -22,6 +22,12 @@ function normalizeOrganization(input) {
   return trimmed.replace(/\/.*$/, '');
 }
 
+// An org slug is a single path segment — no @ (email), spaces or dots. Catches
+// the common mistake of pasting an email or login in the organization field.
+function isValidOrganization(org) {
+  return org.length > 0 && !/[@\s.]/.test(org);
+}
+
 function safeAzureResponse(user) {
   return {
     connected: !!user.azureOrganization,
@@ -39,6 +45,8 @@ async function saveAzureSettings(userId, { organization, patToken }) {
   if (!user) throw new Error('User not found');
 
   const cleanOrg = normalizeOrganization(organization);
+  if (!isValidOrganization(cleanOrg)) throw new Error('Invalid organization');
+
   const encrypted = encryption.encrypt(patToken);
   await user.update({
     azureOrganization: cleanOrg,

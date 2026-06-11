@@ -20,6 +20,9 @@ async function saveAzureSettings(req, res) {
     res.status(200).json(result);
   } catch (error) {
     if (error.message === 'User not found') return res.status(404).json({ error: error.message });
+    if (error.message === 'Invalid organization') {
+      return res.status(400).json({ error: 'That looks invalid — use just the organization name (e.g. softworks-workforce), not an email or URL.' });
+    }
     res.status(500).json({ error: 'Internal server error' });
   }
 }

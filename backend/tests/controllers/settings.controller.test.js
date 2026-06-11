@@ -72,6 +72,14 @@ describe('saveAzureSettings(req, res)', () => {
     await saveAzureSettings({ user: { userId: 99 }, body: { organization: 'org', patToken: 'pat' } }, res);
     expect(res.status).toHaveBeenCalledWith(404);
   });
+
+  it('returns 400 if service throws "Invalid organization"', async () => {
+    settingsService.saveAzureSettings.mockRejectedValue(new Error('Invalid organization'));
+    const res = mockRes();
+    await saveAzureSettings({ user: { userId: 1 }, body: { organization: 'a@b.com', patToken: 'pat' } }, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: expect.stringContaining('organization name') }));
+  });
 });
 
 describe('removeAzureSettings(req, res)', () => {

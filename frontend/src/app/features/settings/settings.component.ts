@@ -127,11 +127,16 @@ export class SettingsComponent implements OnInit {
     }
     this.error.set(null);
     this.loading.set(true);
-    const result = await firstValueFrom(
-      this.service.saveAzureSettings({ organization: this.organization(), patToken: this.patToken() })
-    );
-    this.settings.set(result);
-    this.loading.set(false);
+    try {
+      const result = await firstValueFrom(
+        this.service.saveAzureSettings({ organization: this.organization(), patToken: this.patToken() })
+      );
+      this.settings.set(result);
+    } catch (err: any) {
+      this.error.set(err?.error?.error || 'Could not connect. Check the organization and PAT.');
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   async disconnect() {

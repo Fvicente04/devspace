@@ -142,6 +142,27 @@ describe('SettingsComponent', () => {
       expect(fixture.nativeElement.querySelector('[data-testid="error-msg"]')).toBeTruthy();
       expect(service.saveAzureSettings).not.toHaveBeenCalled();
     });
+
+    it('surfaces the backend error message and stays on the form when save fails', async () => {
+      service.saveAzureSettings.mockReturnValue(
+        throwError(() => ({ error: { error: 'That looks invalid — use just the organization name (e.g. softworks-workforce), not an email or URL.' } }))
+      );
+      await createComponent();
+      await openForm();
+      const orgInput: HTMLInputElement = fixture.nativeElement.querySelector('[data-testid="org-input"]');
+      const patInput: HTMLInputElement = fixture.nativeElement.querySelector('[data-testid="pat-input"]');
+      orgInput.value = 'fvicente@softworks.com';
+      orgInput.dispatchEvent(new Event('input'));
+      patInput.value = 'my-pat';
+      patInput.dispatchEvent(new Event('input'));
+      fixture.nativeElement.querySelector('[data-testid="connect-btn"]').click();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      const errorEl = fixture.nativeElement.querySelector('[data-testid="error-msg"]');
+      expect(errorEl).toBeTruthy();
+      expect(errorEl.textContent).toContain('organization name');
+      expect(fixture.nativeElement.querySelector('[data-testid="disconnect-btn"]')).toBeFalsy();
+    });
   });
 
   describe('disconnect flow', () => {

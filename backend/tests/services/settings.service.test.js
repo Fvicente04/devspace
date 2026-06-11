@@ -95,6 +95,19 @@ describe('saveAzureSettings(userId, { organization, patToken })', () => {
       expect.objectContaining({ azureOrganization: expected })
     );
   });
+
+  it.each([
+    'fvicente@softworks.com',
+    'softworks workforce',
+    'softworks.visualstudio',
+    '',
+  ])('throws "Invalid organization" and does not save for %s', async (badOrg) => {
+    const mockUpdate = jest.fn().mockResolvedValue(true);
+    User.findOne.mockResolvedValue({ ...disconnectedUser, update: mockUpdate });
+    await expect(saveAzureSettings(1, { organization: badOrg, patToken: 'my-pat' }))
+      .rejects.toThrow('Invalid organization');
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
 });
 
 describe('removeAzureSettings(userId)', () => {
