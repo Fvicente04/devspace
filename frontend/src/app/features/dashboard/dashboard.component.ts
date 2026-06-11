@@ -9,6 +9,7 @@ import { NotesWidgetComponent } from '../notes/notes-widget/notes-widget.compone
 import { PomodoroComponent } from '../pomodoro/pomodoro.component';
 import { TimerService } from '../pomodoro/timer.service';
 import { TasksWidgetComponent } from '../tasks/tasks-widget/tasks-widget.component';
+import { AzurePrsWidgetComponent } from '../azure/prs-widget/prs-widget.component';
 import { PipelinesWidgetComponent } from '../azure/pipelines-widget/pipelines-widget.component';
 import { WorkItemsWidgetComponent } from '../azure/workitems-widget/workitems-widget.component';
 import { SettingsService } from '../settings/settings.service';
@@ -18,6 +19,7 @@ import { SettingsService } from '../settings/settings.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ActivityWidgetComponent,
+    AzurePrsWidgetComponent,
     GithubCardComponent,
     NotesWidgetComponent,
     PageHeaderComponent,
@@ -39,6 +41,7 @@ import { SettingsService } from '../settings/settings.service';
       <app-notes-widget />
       <app-activity-widget class="activity-card" />
       <app-workitems-widget class="workitems-card" [azureConnected]="azureConnected()" />
+      <app-azure-prs-widget class="azure-prs-card" [azureConnected]="azureConnected()" />
       <app-pipelines-widget class="pipelines-card" [azureConnected]="azureConnected()" />
     </div>
   `,
@@ -61,7 +64,12 @@ import { SettingsService } from '../settings/settings.service';
     }
 
     .workitems-card {
-      grid-column: 1 / 3;
+      grid-column: 1;
+      grid-row: 3;
+    }
+
+    .azure-prs-card {
+      grid-column: 2;
       grid-row: 3;
     }
 
