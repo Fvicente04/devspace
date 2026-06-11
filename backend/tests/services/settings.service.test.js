@@ -79,6 +79,22 @@ describe('saveAzureSettings(userId, { organization, patToken })', () => {
     await expect(saveAzureSettings(99, { organization: 'org', patToken: 'pat' }))
       .rejects.toThrow('User not found');
   });
+
+  it.each([
+    ['https://dev.azure.com/softworks-workforce', 'softworks-workforce'],
+    ['softworks-workforce.visualstudio.com', 'softworks-workforce'],
+    ['https://softworks-workforce.visualstudio.com/', 'softworks-workforce'],
+    ['dev.azure.com/softworks-workforce/AllSoftworksProjects', 'softworks-workforce'],
+    ['  softworks-workforce/  ', 'softworks-workforce'],
+  ])('normalizes pasted org %s to the bare slug', async (input, expected) => {
+    const mockUpdate = jest.fn().mockResolvedValue(true);
+    User.findOne.mockResolvedValue({ ...disconnectedUser, update: mockUpdate });
+    const result = await saveAzureSettings(1, { organization: input, patToken: 'my-pat' });
+    expect(result.organization).toBe(expected);
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ azureOrganization: expected })
+    );
+  });
 });
 
 describe('removeAzureSettings(userId)', () => {
