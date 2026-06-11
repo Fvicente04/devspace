@@ -75,11 +75,18 @@ export class PomodoroComponent implements OnInit, OnDestroy {
   }
 
   async startTimer() {
-    await firstValueFrom(
-      this.timerService.startSession({ type: this.mode(), taskId: this.selectedTaskId() })
-    );
+    if (this.state() !== 'idle') return;
 
     this.state.set('running');
+    try {
+      await firstValueFrom(
+        this.timerService.startSession({ type: this.mode(), taskId: this.selectedTaskId() })
+      );
+    } catch (error) {
+      this.state.set('idle');
+      throw error;
+    }
+
     this.intervalId = setInterval(() => this.tick(), 1000);
   }
 
