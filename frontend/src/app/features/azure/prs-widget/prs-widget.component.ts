@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
@@ -49,15 +49,26 @@ import { AzureService } from '../azure.service';
     .not-connected a { color: var(--accent); }
   `],
 })
-export class AzurePrsWidgetComponent implements OnInit {
+export class AzurePrsWidgetComponent {
   private service = inject(AzureService);
 
   azureConnected = input<boolean>(false);
   prs = signal<AzurePullRequest[]>([]);
   loading = signal(false);
+  private fetched = false;
 
-  async ngOnInit() {
-    if (!this.azureConnected()) return;
+  constructor() {
+    // azureConnected arrives async from the dashboard, so fetch when it flips
+    // true rather than reading it once at init
+    effect(() => {
+      if (this.azureConnected() && !this.fetched) {
+        this.fetched = true;
+        this.load();
+      }
+    });
+  }
+
+  private async load() {
     this.loading.set(true);
     const all = await firstValueFrom(this.service.getPullRequests());
     this.prs.set(all.slice(0, 5));

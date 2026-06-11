@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
@@ -67,18 +67,27 @@ function stateBadgeClass(state: string): string {
     .not-connected a { color: var(--accent); }
   `],
 })
-export class WorkItemsWidgetComponent implements OnInit {
+export class WorkItemsWidgetComponent {
   private service = inject(AzureService);
 
   azureConnected = input<boolean>(false);
   items = signal<AzureWorkItem[]>([]);
   loading = signal(false);
+  private fetched = false;
 
   readonly typeBadge = typeBadgeClass;
   readonly stateBadge = stateBadgeClass;
 
-  async ngOnInit() {
-    if (!this.azureConnected()) return;
+  constructor() {
+    effect(() => {
+      if (this.azureConnected() && !this.fetched) {
+        this.fetched = true;
+        this.load();
+      }
+    });
+  }
+
+  private async load() {
     this.loading.set(true);
     const all = await firstValueFrom(this.service.getWorkItems());
     this.items.set(all.slice(0, 5));

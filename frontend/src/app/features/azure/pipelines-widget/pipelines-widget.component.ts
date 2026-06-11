@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
@@ -54,17 +54,26 @@ function pipelineStatusClass(pipeline: AzurePipeline): string {
     .not-connected a { color: var(--accent); }
   `],
 })
-export class PipelinesWidgetComponent implements OnInit {
+export class PipelinesWidgetComponent {
   private service = inject(AzureService);
 
   azureConnected = input<boolean>(false);
   pipelines = signal<AzurePipeline[]>([]);
   loading = signal(false);
+  private fetched = false;
 
   readonly statusClass = pipelineStatusClass;
 
-  async ngOnInit() {
-    if (!this.azureConnected()) return;
+  constructor() {
+    effect(() => {
+      if (this.azureConnected() && !this.fetched) {
+        this.fetched = true;
+        this.load();
+      }
+    });
+  }
+
+  private async load() {
     this.loading.set(true);
     const all = await firstValueFrom(this.service.getPipelines());
     this.pipelines.set(all.slice(0, 5));
