@@ -37,11 +37,6 @@ import { Issue, PullRequest } from '../github.models';
     </app-card>
   `,
   styles: [`
-    :host {
-      grid-column: 3;
-      grid-row: 1;
-    }
-
     .section-label {
       color: var(--text-muted);
       font-family: 'JetBrains Mono', monospace;

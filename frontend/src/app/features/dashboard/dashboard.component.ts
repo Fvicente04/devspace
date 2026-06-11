@@ -34,48 +34,79 @@ import { SettingsService } from '../settings/settings.service';
       <button class="btn btn-primary" type="button" (click)="openNewTask()">New Task</button>
     </app-page-header>
 
-    <div class="dashboard-grid">
-      <app-pomodoro class="pomodoro-card" />
-      <app-tasks-widget />
-      <app-github-card />
-      <app-notes-widget />
-      <app-activity-widget class="activity-card" />
-      <app-workitems-widget class="workitems-card" [azureConnected]="azureConnected()" />
-      <app-azure-prs-widget class="azure-prs-card" [azureConnected]="azureConnected()" />
-      <app-pipelines-widget class="pipelines-card" [azureConnected]="azureConnected()" />
+    <div class="dashboard">
+      <section class="dash-section" id="card-pomodoro">
+        <div class="section-label"><span class="dot"></span> focus</div>
+        <div class="section-grid focus-grid">
+          <app-pomodoro />
+          <app-tasks-widget id="card-tasks" />
+          <app-notes-widget id="card-notes" />
+        </div>
+      </section>
+
+      <section class="dash-section" id="card-github">
+        <div class="section-label"><span class="dot dot-green"></span> github</div>
+        <div class="section-grid github-grid">
+          <app-github-card />
+          <app-activity-widget />
+        </div>
+      </section>
+
+      <section class="dash-section" id="card-azure">
+        <div class="section-label"><span class="dot dot-blue"></span> azure devops</div>
+        <div class="section-grid azure-grid">
+          <app-workitems-widget [azureConnected]="azureConnected()" />
+          <app-azure-prs-widget [azureConnected]="azureConnected()" />
+          <app-pipelines-widget [azureConnected]="azureConnected()" />
+        </div>
+      </section>
     </div>
   `,
   styles: [`
-    .dashboard-grid {
+    .dashboard {
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+    }
+
+    .dash-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-margin-top: 12px;
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .dot-green { background: var(--green); }
+    .dot-blue { background: var(--blue); }
+
+    .section-grid {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      grid-template-rows: auto auto auto;
       gap: 16px;
+      align-items: start;
     }
 
-    .pomodoro-card {
-      grid-column: 1;
-      grid-row: 1;
-    }
-
-    .activity-card {
-      grid-column: 3;
-      grid-row: 2;
-    }
-
-    .workitems-card {
-      grid-column: 1;
-      grid-row: 3;
-    }
-
-    .azure-prs-card {
-      grid-column: 2;
-      grid-row: 3;
-    }
-
-    .pipelines-card {
-      grid-column: 3;
-      grid-row: 3;
+    .github-grid {
+      grid-template-columns: 2fr 1fr;
     }
   `],
 })

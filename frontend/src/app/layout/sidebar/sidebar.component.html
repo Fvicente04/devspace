@@ -7,12 +7,21 @@
   <nav class="nav-section">
     <div class="nav-label">workspace</div>
     @for (item of nav; track item.label) {
-      <a class="nav-item" [class.active]="isActive(item.path)" [routerLink]="item.path">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path [attr.d]="item.icon"></path>
-        </svg>
-        <span>{{ item.label }}</span>
-      </a>
+      @if (item.route) {
+        <a class="nav-item" [class.active]="isActive(item.route)" [routerLink]="item.route">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path [attr.d]="item.icon"></path>
+          </svg>
+          <span>{{ item.label }}</span>
+        </a>
+      } @else {
+        <button class="nav-item" type="button" (click)="scrollToCard(item.anchor!)">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path [attr.d]="item.icon"></path>
+          </svg>
+          <span>{{ item.label }}</span>
+        </button>
+      }
     }
   </nav>
 

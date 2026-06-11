@@ -1,6 +1,6 @@
 // Tests for SidebarComponent — logout button renders and calls auth.logout()
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { signal } from '@angular/core';
 
 import { AuthService } from '../../core/auth.service';
@@ -45,6 +45,28 @@ describe('SidebarComponent', () => {
     const items: NodeListOf<HTMLAnchorElement> = fixture.nativeElement.querySelectorAll('.nav-item');
     const settingsItem = Array.from(items).find((el) => el.textContent.includes('Settings'));
     expect(settingsItem?.getAttribute('href')).toBe('/settings');
+  });
+
+  it('renders scroll-only nav items (GitHub) as a button, not a link', () => {
+    const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button.nav-item');
+    const labels = Array.from(buttons).map((el) => el.textContent?.trim());
+    expect(labels).toContain('GitHub');
+  });
+
+  it('scrolls to the card when a scroll-only nav item is clicked on the dashboard', () => {
+    const el = document.createElement('div');
+    const scrollSpy = vi.fn();
+    el.scrollIntoView = scrollSpy;
+    vi.spyOn(document, 'getElementById').mockReturnValue(el);
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'url', 'get').mockReturnValue('/dashboard');
+
+    const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button.nav-item');
+    const github = Array.from(buttons).find((el) => el.textContent?.includes('GitHub'));
+    github?.click();
+
+    expect(document.getElementById).toHaveBeenCalledWith('card-github');
+    expect(scrollSpy).toHaveBeenCalled();
   });
 
   it('renders the logout button', () => {
