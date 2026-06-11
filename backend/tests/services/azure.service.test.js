@@ -81,26 +81,24 @@ describe('getWorkItems(userId, organization, encryptedPat)', () => {
 
 describe('getPullRequests(userId, organization, encryptedPat)', () => {
   beforeEach(() => {
-    axios.get.mockImplementation((url) => {
-      if (url.includes('/_apis/projects')) {
-        return Promise.resolve({ data: { value: [{ name: 'DevSpace' }] } });
-      }
-      if (url.includes('pullrequests')) {
-        return Promise.resolve({
-          data: {
-            value: [{ pullRequestId: 10, title: 'Add feature', repository: { name: 'repo' }, status: 'active', creationDate: '2024-01-01' }],
-          },
-        });
-      }
-      return Promise.reject(new Error(`unexpected url ${url}`));
+    axios.get.mockResolvedValue({
+      data: {
+        value: [{
+          pullRequestId: 10,
+          title: 'Add feature',
+          repository: { name: 'repo', project: { name: 'DevSpace' } },
+          status: 'active',
+          creationDate: '2024-01-01',
+        }],
+      },
     });
   });
 
-  it('lists the org projects and GETs the project-scoped pull requests endpoint', async () => {
+  it('GETs the org-level pull requests endpoint filtered to active', async () => {
     await getPullRequests(userId, org, encryptedPat);
-    expect(axios.get.mock.calls[0][0]).toContain(`dev.azure.com/${org}/_apis/projects`);
-    expect(axios.get.mock.calls[1][0]).toContain(`dev.azure.com/${org}/DevSpace/_apis/git/pullrequests`);
-    expect(axios.get.mock.calls[1][0]).toContain('searchCriteria.status=active');
+    expect(axios.get.mock.calls[0][0]).toContain(`dev.azure.com/${org}/_apis/git/pullrequests`);
+    expect(axios.get.mock.calls[0][0]).not.toContain('/_apis/projects');
+    expect(axios.get.mock.calls[0][0]).toContain('searchCriteria.status=active');
   });
 
   it('returns formatted array with the browser PR link, not the API url', async () => {
@@ -119,7 +117,7 @@ describe('getPullRequests(userId, organization, encryptedPat)', () => {
     await getPullRequests(userId, org, encryptedPat);
     const cached = await getPullRequests(userId, org, encryptedPat);
     expect(cached).toEqual([{ id: 10, title: 'cached' }]);
-    expect(axios.get).toHaveBeenCalledTimes(2);
+    expect(axios.get).toHaveBeenCalledTimes(1);
   });
 
   it('throws "Azure DevOps PAT invalid or expired" on 401', async () => {

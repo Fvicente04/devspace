@@ -58,22 +58,20 @@ async function getPullRequests(userId, organization, encryptedPat) {
   const cacheKey = `azure:prs:${userId}`;
   return fetchAzureWithCache(userId, cacheKey, 300, async () => {
     const headers = { Authorization: buildAuthHeader(encryptedPat) };
+    // Org-level endpoint returns PRs across every project the PAT can see —
+    // listing projects first misses any project _apis/projects doesn't return
+    const url = `https://dev.azure.com/${organization}/_apis/git/pullrequests?searchCriteria.status=active&$top=50&api-version=7.0`;
     try {
-      const projects = await listProjectNames(organization, headers);
-      const perProject = await Promise.all(projects.map(async (project) => {
-        const url = `https://dev.azure.com/${organization}/${encodeURIComponent(project)}/_apis/git/pullrequests?searchCriteria.status=active&api-version=7.0`;
-        const res = await axios.get(url, { headers });
-        return res.data.value.map((pr) => ({
-          id: pr.pullRequestId,
-          title: pr.title,
-          repo: pr.repository.name,
-          status: pr.status,
-          // pr.url is the JSON API resource — build the browser link instead
-          url: `https://dev.azure.com/${organization}/${encodeURIComponent(project)}/_git/${encodeURIComponent(pr.repository.name)}/pullrequest/${pr.pullRequestId}`,
-          createdAt: pr.creationDate,
-        }));
+      const res = await axios.get(url, { headers });
+      return res.data.value.map((pr) => ({
+        id: pr.pullRequestId,
+        title: pr.title,
+        repo: pr.repository.name,
+        status: pr.status,
+        // pr.url is the JSON API resource — build the browser link instead
+        url: `https://dev.azure.com/${organization}/${encodeURIComponent(pr.repository.project.name)}/_git/${encodeURIComponent(pr.repository.name)}/pullrequest/${pr.pullRequestId}`,
+        createdAt: pr.creationDate,
       }));
-      return perProject.flat().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } catch (error) {
       handleAzureApiError(error);
     }
