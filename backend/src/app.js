@@ -2,12 +2,8 @@
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
-const session = require('express-session');
 const rateLimit = require('express-rate-limit');
-const passport = require('passport');
 const env = require('./config/env');
-
-require('./config/passport');
 
 const authRouter = require('./routes/auth');
 const githubRouter = require('./routes/github');
@@ -27,20 +23,6 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
-
-app.use(session({
-  secret: env.jwtSecret,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: true,
-    sameSite: 'none',
-    maxAge: 5 * 60 * 1000,
-  }
-}));
-
-app.use(passport.initialize());
-app.use(passport.session());
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
