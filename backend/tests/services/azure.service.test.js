@@ -81,22 +81,37 @@ describe('getWorkItems(userId, organization, encryptedPat)', () => {
 
 describe('getPullRequests(userId, organization, encryptedPat)', () => {
   beforeEach(() => {
-    axios.get.mockResolvedValue({
-      data: {
-        value: [{ pullRequestId: 10, title: 'Add feature', repository: { name: 'repo' }, status: 'active', url: 'https://dev.azure.com/pr/10', creationDate: '2024-01-01' }],
-      },
+    axios.get.mockImplementation((url) => {
+      if (url.includes('/_apis/projects')) {
+        return Promise.resolve({ data: { value: [{ name: 'DevSpace' }] } });
+      }
+      if (url.includes('pullrequests')) {
+        return Promise.resolve({
+          data: {
+            value: [{ pullRequestId: 10, title: 'Add feature', repository: { name: 'repo' }, status: 'active', creationDate: '2024-01-01' }],
+          },
+        });
+      }
+      return Promise.reject(new Error(`unexpected url ${url}`));
     });
   });
 
-  it('GETs the pull requests endpoint', async () => {
+  it('lists the org projects and GETs the project-scoped pull requests endpoint', async () => {
     await getPullRequests(userId, org, encryptedPat);
-    expect(axios.get.mock.calls[0][0]).toContain(`dev.azure.com/${org}`);
-    expect(axios.get.mock.calls[0][0]).toContain('pullrequests');
+    expect(axios.get.mock.calls[0][0]).toContain(`dev.azure.com/${org}/_apis/projects`);
+    expect(axios.get.mock.calls[1][0]).toContain(`dev.azure.com/${org}/DevSpace/_apis/git/pullrequests`);
+    expect(axios.get.mock.calls[1][0]).toContain('searchCriteria.status=active');
   });
 
-  it('returns formatted array with id, title, repo, status, url, createdAt', async () => {
+  it('returns formatted array with the browser PR link, not the API url', async () => {
     const result = await getPullRequests(userId, org, encryptedPat);
-    expect(result[0]).toMatchObject({ id: 10, title: 'Add feature', repo: 'repo', status: 'active' });
+    expect(result[0]).toMatchObject({
+      id: 10,
+      title: 'Add feature',
+      repo: 'repo',
+      status: 'active',
+      url: `https://dev.azure.com/${org}/DevSpace/_git/repo/pullrequest/10`,
+    });
   });
 
   it('returns cached result on second call', async () => {
@@ -104,27 +119,40 @@ describe('getPullRequests(userId, organization, encryptedPat)', () => {
     await getPullRequests(userId, org, encryptedPat);
     const cached = await getPullRequests(userId, org, encryptedPat);
     expect(cached).toEqual([{ id: 10, title: 'cached' }]);
-    expect(axios.get).toHaveBeenCalledTimes(1);
+    expect(axios.get).toHaveBeenCalledTimes(2);
+  });
+
+  it('throws "Azure DevOps PAT invalid or expired" on 401', async () => {
+    axios.get.mockRejectedValue({ response: { status: 401 } });
+    await expect(getPullRequests(userId, org, encryptedPat)).rejects.toThrow('Azure DevOps PAT invalid or expired');
   });
 });
 
 describe('getPipelines(userId, organization, encryptedPat)', () => {
   beforeEach(() => {
-    axios.get.mockResolvedValue({
-      data: {
-        value: [{ id: 5, pipeline: { name: 'CI' }, state: 'completed', result: 'succeeded', _links: { web: { href: 'https://dev.azure.com/run/5' } }, finishedDate: '2024-01-01' }],
-      },
+    axios.get.mockImplementation((url) => {
+      if (url.includes('/_apis/projects')) {
+        return Promise.resolve({ data: { value: [{ name: 'DevSpace' }] } });
+      }
+      if (url.includes('build/builds')) {
+        return Promise.resolve({
+          data: {
+            value: [{ id: 5, definition: { name: 'CI' }, status: 'completed', result: 'succeeded', _links: { web: { href: 'https://dev.azure.com/run/5' } }, finishTime: '2024-01-01' }],
+          },
+        });
+      }
+      return Promise.reject(new Error(`unexpected url ${url}`));
     });
   });
 
-  it('GETs the pipelines runs endpoint', async () => {
+  it('GETs the project-scoped builds endpoint', async () => {
     await getPipelines(userId, org, encryptedPat);
-    expect(axios.get.mock.calls[0][0]).toContain('pipelines');
+    expect(axios.get.mock.calls[1][0]).toContain(`dev.azure.com/${org}/DevSpace/_apis/build/builds`);
   });
 
   it('returns formatted array with id, name, status, result, url, finishedAt', async () => {
     const result = await getPipelines(userId, org, encryptedPat);
-    expect(result[0]).toMatchObject({ id: 5, name: 'CI', status: 'completed', result: 'succeeded' });
+    expect(result[0]).toMatchObject({ id: 5, name: 'CI', status: 'completed', result: 'succeeded', url: 'https://dev.azure.com/run/5', finishedAt: '2024-01-01' });
   });
 
   it('uses cache TTL of 120 seconds', async () => {
@@ -137,22 +165,35 @@ describe('getPipelines(userId, organization, encryptedPat)', () => {
     await getPipelines(userId, org, encryptedPat);
     const cached = await getPipelines(userId, org, encryptedPat);
     expect(cached).toEqual([{ id: 5, name: 'cached' }]);
-    expect(axios.get).toHaveBeenCalledTimes(1);
+    expect(axios.get).toHaveBeenCalledTimes(2);
   });
 });
 
 describe('getCommits(userId, organization, encryptedPat)', () => {
   beforeEach(() => {
-    axios.get.mockResolvedValue({
-      data: {
-        value: [{ commitId: 'abc123', comment: 'fix: bug', author: { name: 'Felipe' }, remoteUrl: 'https://dev.azure.com/commit/abc', author: { name: 'Felipe', date: '2024-01-01' } }],
-      },
+    axios.get.mockImplementation((url) => {
+      if (url.includes('/_apis/projects')) {
+        return Promise.resolve({ data: { value: [{ name: 'DevSpace' }] } });
+      }
+      if (url.includes('/_apis/git/repositories') && !url.includes('/commits')) {
+        return Promise.resolve({ data: { value: [{ id: 'repo-guid', name: 'repo' }] } });
+      }
+      if (url.includes('/commits')) {
+        return Promise.resolve({
+          data: {
+            value: [{ commitId: 'abc123', comment: 'fix: bug', remoteUrl: 'https://dev.azure.com/commit/abc', author: { name: 'Felipe', date: '2024-01-01' } }],
+          },
+        });
+      }
+      return Promise.reject(new Error(`unexpected url ${url}`));
     });
   });
 
-  it('GETs the commits endpoint', async () => {
+  it('lists projects, then repos, then GETs commits per repo', async () => {
     await getCommits(userId, org, encryptedPat);
-    expect(axios.get.mock.calls[0][0]).toContain('commits');
+    expect(axios.get.mock.calls[0][0]).toContain('/_apis/projects');
+    expect(axios.get.mock.calls[1][0]).toContain(`dev.azure.com/${org}/DevSpace/_apis/git/repositories`);
+    expect(axios.get.mock.calls[2][0]).toContain('/repositories/repo-guid/commits');
   });
 
   it('returns formatted array with id, message, author, url, date', async () => {
@@ -165,6 +206,6 @@ describe('getCommits(userId, organization, encryptedPat)', () => {
     await getCommits(userId, org, encryptedPat);
     const cached = await getCommits(userId, org, encryptedPat);
     expect(cached).toEqual([{ id: 'abc', message: 'cached' }]);
-    expect(axios.get).toHaveBeenCalledTimes(1);
+    expect(axios.get).toHaveBeenCalledTimes(3);
   });
 });

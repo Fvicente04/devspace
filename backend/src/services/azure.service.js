@@ -22,6 +22,14 @@ async function fetchAzureWithCache(userId, cacheKey, ttl, fetchFn) {
   return result;
 }
 
+// PRs, builds and commits are project-scoped in the Azure DevOps API,
+// so every aggregation starts by listing the org's projects
+async function listProjectNames(organization, headers) {
+  const url = `https://dev.azure.com/${organization}/_apis/projects?api-version=7.0`;
+  const res = await axios.get(url, { headers });
+  return res.data.value.map((p) => p.name);
+}
+
 async function getWorkItems(userId, organization, encryptedPat) {
   const cacheKey = `azure:workitems:${userId}`;
   return fetchAzureWithCache(userId, cacheKey, 300, async () => {
@@ -50,16 +58,25 @@ async function getPullRequests(userId, organization, encryptedPat) {
   const cacheKey = `azure:prs:${userId}`;
   return fetchAzureWithCache(userId, cacheKey, 300, async () => {
     const headers = { Authorization: buildAuthHeader(encryptedPat) };
-    const url = `https://dev.azure.com/${organization}/_apis/git/pullrequests?api-version=7.0`;
-    const res = await axios.get(url, { headers });
-    return res.data.value.map((pr) => ({
-      id: pr.pullRequestId,
-      title: pr.title,
-      repo: pr.repository.name,
-      status: pr.status,
-      url: pr.url,
-      createdAt: pr.creationDate,
-    }));
+    try {
+      const projects = await listProjectNames(organization, headers);
+      const perProject = await Promise.all(projects.map(async (project) => {
+        const url = `https://dev.azure.com/${organization}/${encodeURIComponent(project)}/_apis/git/pullrequests?searchCriteria.status=active&api-version=7.0`;
+        const res = await axios.get(url, { headers });
+        return res.data.value.map((pr) => ({
+          id: pr.pullRequestId,
+          title: pr.title,
+          repo: pr.repository.name,
+          status: pr.status,
+          // pr.url is the JSON API resource — build the browser link instead
+          url: `https://dev.azure.com/${organization}/${encodeURIComponent(project)}/_git/${encodeURIComponent(pr.repository.name)}/pullrequest/${pr.pullRequestId}`,
+          createdAt: pr.creationDate,
+        }));
+      }));
+      return perProject.flat().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } catch (error) {
+      handleAzureApiError(error);
+    }
   });
 }
 
@@ -67,16 +84,29 @@ async function getPipelines(userId, organization, encryptedPat) {
   const cacheKey = `azure:pipelines:${userId}`;
   return fetchAzureWithCache(userId, cacheKey, 120, async () => {
     const headers = { Authorization: buildAuthHeader(encryptedPat) };
-    const url = `https://dev.azure.com/${organization}/_apis/pipelines/runs?api-version=7.0`;
-    const res = await axios.get(url, { headers });
-    return res.data.value.map((run) => ({
-      id: run.id,
-      name: run.pipeline.name,
-      status: run.state,
-      result: run.result,
-      url: run._links?.web?.href,
-      finishedAt: run.finishedDate,
-    }));
+    try {
+      const projects = await listProjectNames(organization, headers);
+      // Build API instead of pipelines/runs — runs requires a pipeline id,
+      // builds lists recent runs across all definitions in one call per project
+      const perProject = await Promise.all(projects.map(async (project) => {
+        const url = `https://dev.azure.com/${organization}/${encodeURIComponent(project)}/_apis/build/builds?$top=5&queryOrder=finishTimeDescending&api-version=7.0`;
+        const res = await axios.get(url, { headers });
+        return res.data.value.map((build) => ({
+          id: build.id,
+          name: build.definition.name,
+          status: build.status,
+          result: build.result || null,
+          url: build._links?.web?.href,
+          finishedAt: build.finishTime || null,
+        }));
+      }));
+      // in-progress runs have no finishTime — treat them as most recent
+      return perProject.flat()
+        .sort((a, b) => new Date(b.finishedAt || Date.now()) - new Date(a.finishedAt || Date.now()))
+        .slice(0, 5);
+    } catch (error) {
+      handleAzureApiError(error);
+    }
   });
 }
 
@@ -84,15 +114,32 @@ async function getCommits(userId, organization, encryptedPat) {
   const cacheKey = `azure:commits:${userId}`;
   return fetchAzureWithCache(userId, cacheKey, 300, async () => {
     const headers = { Authorization: buildAuthHeader(encryptedPat) };
-    const url = `https://dev.azure.com/${organization}/_apis/git/commits?api-version=7.0`;
-    const res = await axios.get(url, { headers });
-    return res.data.value.map((c) => ({
-      id: c.commitId,
-      message: c.comment,
-      author: c.author.name,
-      url: c.remoteUrl,
-      date: c.author.date,
-    }));
+    try {
+      const projects = await listProjectNames(organization, headers);
+      // commits are repo-scoped, so this fans out projects × repos — fine for
+      // small orgs and cached 5 min, but will be slow on orgs with many repos
+      const perProject = await Promise.all(projects.map(async (project) => {
+        const reposUrl = `https://dev.azure.com/${organization}/${encodeURIComponent(project)}/_apis/git/repositories?api-version=7.0`;
+        const reposRes = await axios.get(reposUrl, { headers });
+        const perRepo = await Promise.all(reposRes.data.value.map(async (repo) => {
+          const commitsUrl = `https://dev.azure.com/${organization}/${encodeURIComponent(project)}/_apis/git/repositories/${repo.id}/commits?searchCriteria.$top=10&api-version=7.0`;
+          const res = await axios.get(commitsUrl, { headers });
+          return res.data.value.map((c) => ({
+            id: c.commitId,
+            message: c.comment,
+            author: c.author.name,
+            url: c.remoteUrl,
+            date: c.author.date,
+          }));
+        }));
+        return perRepo.flat();
+      }));
+      return perProject.flat()
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 10);
+    } catch (error) {
+      handleAzureApiError(error);
+    }
   });
 }
 
